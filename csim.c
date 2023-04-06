@@ -21,7 +21,7 @@ int b = 0;
 int v = 0;
 int h = 0;
 int t = 0;
-char* tracefile = NULL;
+char* tracefile = 0;
 int S;
 int B;
 int lru_set;
@@ -63,54 +63,53 @@ void initCache(block_t cache[S][E]) {
     }
 }
 
+
 void cacheAccess(block_t cache[S][E], uint64_t address) {
     uint64_t set = address >> B;
-    uint64_t setMask = 
+    uint64_t setMask = S - 1;
     set = set & (setMask);
     uint64_t tag = address >> (S + B);
-    //uint64_t evict_lru;
-    lru_count++;
+    uint64_t block_2_evict = 0;
+    uint64_t evict_lru_maximum = 1;
+
+    //update all LRU counters
+    for (int i = 0; i < E; i++) {
+        if (!(cache[set][E].valid && (cache[set][E].tag == tag))) {
+            cache[set][E].lru++;
+        }
+    }
+
+    //check for hit, if hit set LRU counter to 0 and return
     for (int i = 0; i < E; i++) {
         if (cache[set][E].valid && (cache[set][E].tag == tag)) {
-            cache[set][E].lru = lru_count;
+            cache[set][E].lru = 0;
             hit_count++;
             return;
             printf("HIT");
         }
     }
-    for (int i = 0; i < (E-1); i++) {
+    
+    
+    for (int i = 0; i < (E); i++) {
         // only update some of the lru counters (ones that are above)
-        
+        if (cache[set][E].lru < evict_lru_maximum) {
+            evict_lru_maximum = cache[set][E].lru;
+            block_2_evict = i;
+        }
     }
 
-    for (int i = 0; i < E; i++) {
-        if ()
+    //find block to evict in set
+    if (cache[set][block_2_evict].valid) {
+        eviction_count++;
     }
+
     miss_count++;
-
-    cache[S][E].lru++;
+    cache[set][block_2_evict].lru = 0;
+    cache[set][block_2_evict].tag = tag;
+    cache[set][block_2_evict].valid = 1;
 }
 
 void traceFile(char* traceFile) {
-    FILE* fp;
-    fp = fopen(tracefile, "r");
-    uint64_t address;
-    char trace_line;
-    int size;
-    if (fp != NULL) {
-        while (fscanf(fp, "%c %jd,%d", &trace_line, &address, &size) == 3) {
-            switch(trace_line) {
-                case 'I':
-                    break;
-                case 'L': 
-                    break;
-                case 'S':
-                    break;
-                case 'M':
-                    break;
-            }
-        }
-    }
 
     
 }
@@ -119,13 +118,6 @@ int main(int argc, char *argv[])
 {
     //ARGUMENT CHECKS
     char opt;
-    
-    //initial check
-    if ((s==0) || (E==0) || (b==0) || (tracefile==NULL)) {
-        printf("%s: Missing required command line argument\n", argv[0]);
-        printOptions(argv);
-        exit(0);
-    }
     //all arg check
     while((opt = getopt(argc, argv, "s:E:b:t:vh")) != -1) { 
         switch(opt) 
@@ -145,7 +137,6 @@ int main(int argc, char *argv[])
             case 'v': 
                 verbose = 1;
                 break; 
-                
             case 'h': 
                 printOptions(argv);
                 exit(0);
@@ -160,9 +151,40 @@ int main(int argc, char *argv[])
     S = pow(2,s);
     B = pow(2,b);
     block_t cache[S][E];
+
     //initialize cache
     initCache(cache);
+    FILE* fp;
+    fp = fopen(tracefile, "r");
+    uint64_t address;
+    char trace_line;
+    int size;
+    printf("MADE");
+    while (fscanf(fp, " %c %jd,%d", &trace_line, &address, &size) == 3) {
+        switch(trace_line) {
+            case 'I':
+                //do nothing
+                
+                break;
+            case 'L': 
+                cacheAccess(cache, address);
+                printf("L");
+                break;
+            case 'S':
+                printf("S");
+                break;
+            case 'M':
+                printf("M");
+                break;
+            default:
+                break;
+        }
+    }
+    fclose(fp);
     
+
+    
+    traceFile(tracefile);
     printSummary(hit_count, miss_count, eviction_count);
     return 0;
 }
