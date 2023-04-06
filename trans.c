@@ -1,3 +1,8 @@
+//////////////////////////////////////////
+//   Hayden Beames  Net-ID: hbeames7
+//   Colby Weber    Net-ID: cweber7
+//////////////////////////////////////////
+
 /* 
  * trans.c - Matrix transpose B = A^T
  *
