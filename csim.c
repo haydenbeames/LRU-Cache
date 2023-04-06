@@ -64,43 +64,50 @@ void initCache(block_t cache[S][E]) {
 }
 
 
-void cacheAccess(block_t cache[S][E], uint64_t address) {
-    uint64_t set = address >> B;
-    uint64_t setMask = S - 1;
-    set = set & (setMask);
-    uint64_t tag = address >> (S + B);
+void cacheAccess(block_t cache[S][E], uint64_t address, int s, int b) {
+    uint64_t set = (address << ((sizeof(address)*8 - s - b)) >> (sizeof(address)*8 - s));
+    uint64_t tag = address >> (s + b);
     uint64_t block_2_evict = 0;
     uint64_t evict_lru_maximum = 1;
 
-    //update all LRU counters
     for (int i = 0; i < E; i++) {
-        if (!(cache[set][E].valid && (cache[set][E].tag == tag))) {
-            cache[set][E].lru++;
-        }
+        printf("%d")
     }
+    printf("address: %jd     set: %jd    s: %d     b: %d      ", address, set, s,b);
+    
+
 
     //check for hit, if hit set LRU counter to 0 and return
     for (int i = 0; i < E; i++) {
-        if (cache[set][E].valid && (cache[set][E].tag == tag)) {
-            cache[set][E].lru = 0;
+        if (cache[set][i].valid && (cache[set][i].tag == tag)) {
+            cache[set][i].lru = 0;
+            cache[set][i].tag = tag;
             hit_count++;
+            printf("HIT\n");
+            for (int j = 0; j < E; j++) {
+                cache[set][j].lru++;
+            }
             return;
-            printf("HIT");
         }
     }
     
+    printf("MISS\n");
     
-    for (int i = 0; i < (E); i++) {
+    for (int i = 0; i < E; i++) {
         // only update some of the lru counters (ones that are above)
-        if (cache[set][E].lru < evict_lru_maximum) {
-            evict_lru_maximum = cache[set][E].lru;
+        if (cache[set][i].lru < evict_lru_maximum) {
+            evict_lru_maximum = cache[set][i].lru;
             block_2_evict = i;
         }
     }
-
+    printf("BLOCK_2_EVICT: %jd\n", block_2_evict);
     //find block to evict in set
     if (cache[set][block_2_evict].valid) {
         eviction_count++;
+    }
+
+    for (int i = 0; i < E; i++) {
+        cache[set][i].lru++;
     }
 
     miss_count++;
@@ -161,20 +168,24 @@ int main(int argc, char *argv[])
     int size;
     printf("MADE");
     while (fscanf(fp, " %c %jd,%d", &trace_line, &address, &size) == 3) {
+
+        
         switch(trace_line) {
             case 'I':
-                //do nothing
-                
+                //do nothing    
                 break;
             case 'L': 
-                cacheAccess(cache, address);
-                printf("L");
+                cacheAccess(cache, address, s, b);
+                //printf("L");
                 break;
             case 'S':
-                printf("S");
+                cacheAccess(cache, address, s, b);
+                //printf("S");
                 break;
             case 'M':
-                printf("M");
+                cacheAccess(cache, address, s, b);
+                cacheAccess(cache, address, s, b);
+                //printf("M");
                 break;
             default:
                 break;
