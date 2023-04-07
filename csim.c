@@ -49,7 +49,7 @@ void printOptions(char* argv[]) {
 }
 
 typedef struct {
-    uint8_t valid;
+    int valid;
     uint64_t lru;
     uint64_t tag;
 } block_t;
@@ -65,25 +65,40 @@ void initCache(block_t cache[S][E]) {
 }
 
 
-void cacheAccess(block_t cache[S][E], uint64_t address, int s, int b) {
-    uint64_t set = (address << ((sizeof(address)*8 - s - b)) >> (sizeof(address)*8 - s));
+void cacheAccess(block_t cache[S][E], unsigned long long address, int s, int b, char trace_line, unsigned long long instr_count) {
+    unsigned long long set = (address << ((sizeof(address)*8 - s - b))) >> ((sizeof(address)*8 - s));
     uint64_t tag = address >> (s + b);
-    uint64_t block_2_evict = 0;
-    uint64_t evict_lru_maximum = 1;
+    unsigned long long block_2_evict = 0;
+    uint64_t evict_lru_maximum = 0;
 
     for (int i = 0; i < E; i++) {
-        printf("%d")
+        //printf("%jd ", cache[set][i].lru);
+        //printf("          ");
     }
-    printf("address: %jd     set: %jd    s: %d     b: %d      ", address, set, s,b);
-    
+    printf("address: %llx     set: %llx    s: %d     b: %d      ", address, set, s,b);
+    /*
+    if (trace_line == 'M') {
+        hit_count++;
+        for (int j = 0; j < E; j++) {
+               cache[set][j].lru++;
+        }
+    }
+    */
 
-
-    //check for hit, if hit set LRU counter to 0 and return
+    //check for hit, if hit set LRU counter to instr_count and return
     for (int i = 0; i < E; i++) {
         if (cache[set][i].valid && (cache[set][i].tag == tag)) {
-            cache[set][i].lru = 0;
+            cache[set][i].lru = instr_count;
             cache[set][i].tag = tag;
             hit_count++;
+            for (int i = 0; i < E; i++) {
+                printf("%ju ", cache[set][i].lru);
+                printf("      ");
+            }
+            for (int i = 0; i < E; i++) {
+                printf("%x ", cache[set][i].valid);
+                printf(" ");
+            }
             printf("HIT\n");
             for (int j = 0; j < E; j++) {
                 cache[set][j].lru++;
@@ -92,29 +107,44 @@ void cacheAccess(block_t cache[S][E], uint64_t address, int s, int b) {
         }
     }
     
-    printf("MISS\n");
-    
+
+    evict_lru_maximum = cache[set][0].lru;
     for (int i = 0; i < E; i++) {
-        // only update some of the lru counters (ones that are above)
+        // only update some of the lru counters (ones that are above)      
         if (cache[set][i].lru < evict_lru_maximum) {
             evict_lru_maximum = cache[set][i].lru;
             block_2_evict = i;
         }
     }
-    printf("BLOCK_2_EVICT: %jd\n", block_2_evict);
+
+    for (int i = 0; i < E; i++) {
+        printf("%ju ", cache[set][i].lru);
+        printf("      ");
+    }
+
+    for (int i = 0; i < E; i++) {
+        printf("%x ", cache[set][i].valid);
+        printf(" ");
+    }
+    
+    
     //find block to evict in set
     if (cache[set][block_2_evict].valid) {
+        printf("BLOCK_2_EVICT: %llx\n", block_2_evict);
         eviction_count++;
     }
 
+    //printf("MISS\n");
     for (int i = 0; i < E; i++) {
         cache[set][i].lru++;
     }
 
     miss_count++;
-    cache[set][block_2_evict].lru = 0;
+
+    cache[set][block_2_evict].lru = instr_count;
     cache[set][block_2_evict].tag = tag;
     cache[set][block_2_evict].valid = 1;
+    printf("\n");
 }
 
 void traceFile(char* traceFile) {
@@ -164,11 +194,12 @@ int main(int argc, char *argv[])
     initCache(cache);
     FILE* fp;
     fp = fopen(tracefile, "r");
-    uint64_t address;
+    unsigned long long address;
+    unsigned long long instr_count = 0;;
     char trace_line;
     int size;
-    printf("MADE");
-    while (fscanf(fp, " %c %jd,%d", &trace_line, &address, &size) == 3) {
+
+    while (fscanf(fp, " %c %llx,%d", &trace_line, &address, &size) == 3) {
 
         
         switch(trace_line) {
@@ -176,16 +207,20 @@ int main(int argc, char *argv[])
                 //do nothing    
                 break;
             case 'L': 
-                cacheAccess(cache, address, s, b);
+                instr_count++;
+                cacheAccess(cache, address, s, b, trace_line, instr_count);
                 //printf("L");
                 break;
             case 'S':
-                cacheAccess(cache, address, s, b);
+                instr_count++;
+                cacheAccess(cache, address, s, b, trace_line, instr_count);
                 //printf("S");
                 break;
             case 'M':
-                cacheAccess(cache, address, s, b);
-                cacheAccess(cache, address, s, b);
+                instr_count++;
+                cacheAccess(cache, address, s, b, trace_line, instr_count);
+                instr_count++;
+                cacheAccess(cache, address, s, b, trace_line, instr_count);
                 //printf("M");
                 break;
             default:
