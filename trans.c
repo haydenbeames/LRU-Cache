@@ -80,14 +80,23 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
             for (j = 0; j < (N / BLOCK_SIZE); j ++) {
                 // move over first four rows
                 for (ii = 0; ii < 4; ii ++) {
-                    B[j * 8 + 0][i * 8 + 0 + ii] = A[i * 8 + ii][j * 8 + 0];
-                    B[j * 8 + 1][i * 8 + 0 + ii] = A[i * 8 + ii][j * 8 + 1];
-                    B[j * 8 + 2][i * 8 + 0 + ii] = A[i * 8 + ii][j * 8 + 2];
-                    B[j * 8 + 3][i * 8 + 0 + ii] = A[i * 8 + ii][j * 8 + 3];
-                    B[j * 8 + 0][i * 8 + 4 + ii] = A[i * 8 + ii][j * 8 + 4];
-                    B[j * 8 + 1][i * 8 + 4 + ii] = A[i * 8 + ii][j * 8 + 5];
-                    B[j * 8 + 2][i * 8 + 4 + ii] = A[i * 8 + ii][j * 8 + 6];
-                    B[j * 8 + 3][i * 8 + 4 + ii] = A[i * 8 + ii][j * 8 + 7];
+                    t0 = A[i * 8 + ii][j * 8 + 0];
+                    t1 = A[i * 8 + ii][j * 8 + 1];
+                    t2 = A[i * 8 + ii][j * 8 + 2];
+                    t3 = A[i * 8 + ii][j * 8 + 3];
+                    t4 = A[i * 8 + ii][j * 8 + 4];
+                    t5 = A[i * 8 + ii][j * 8 + 5];
+                    t6 = A[i * 8 + ii][j * 8 + 6];
+                    t7 = A[i * 8 + ii][j * 8 + 7];
+
+                    B[j * 8 + 0][i * 8 + 0 + ii] = t0;
+                    B[j * 8 + 1][i * 8 + 0 + ii] = t1;
+                    B[j * 8 + 2][i * 8 + 0 + ii] = t2;
+                    B[j * 8 + 3][i * 8 + 0 + ii] = t3;
+                    B[j * 8 + 0][i * 8 + 4 + ii] = t4;
+                    B[j * 8 + 1][i * 8 + 4 + ii] = t5;
+                    B[j * 8 + 2][i * 8 + 4 + ii] = t6;
+                    B[j * 8 + 3][i * 8 + 4 + ii] = t7;
                 }
 
                 // move over next four rows
