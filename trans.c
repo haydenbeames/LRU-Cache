@@ -101,21 +101,25 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 
                 // move over next four rows
                 for (ii = 0; ii < 4; ii ++) {
+                    // pull out values that will be replaced
                     t0 = B[j * 8 + ii][i * 8 + 4];
                     t1 = B[j * 8 + ii][i * 8 + 5];
                     t2 = B[j * 8 + ii][i * 8 + 6];
                     t3 = B[j * 8 + ii][i * 8 + 7];
 
+                    // replace with correct values
                     B[j * 8 + ii][i * 8 + 4] = A[i * 8 + 4][j * 8 + ii];
                     B[j * 8 + ii][i * 8 + 5] = A[i * 8 + 5][j * 8 + ii];
                     B[j * 8 + ii][i * 8 + 6] = A[i * 8 + 6][j * 8 + ii];
                     B[j * 8 + ii][i * 8 + 7] = A[i * 8 + 7][j * 8 + ii];
 
+                    // place temp back in
                     B[j * 8 + 4 + ii][i * 8 + 0] = t0;
                     B[j * 8 + 4 + ii][i * 8 + 1] = t1;
                     B[j * 8 + 4 + ii][i * 8 + 2] = t2;
                     B[j * 8 + 4 + ii][i * 8 + 3] = t3;
 
+                    // move last values in
                     B[j * 8 + 4 + ii][i * 8 + 4] = A[i * 8 + 4][j * 8 + 4 + ii];
                     B[j * 8 + 4 + ii][i * 8 + 5] = A[i * 8 + 5][j * 8 + 4 + ii];
                     B[j * 8 + 4 + ii][i * 8 + 6] = A[i * 8 + 6][j * 8 + 4 + ii];
