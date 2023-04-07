@@ -22,10 +22,9 @@ int b = 0;
 int v = 0;
 int h = 0;
 int t = 0;
-char* tracefile = 0;
 int S;
 int B;
-int lru_set;
+char* tracefile = 0;
 uint64_t lru_count = 1;
 //final counters
 int hit_count = 0;
@@ -212,6 +211,6 @@ int main(int argc, char *argv[])
 
     //print cache access statistics
     printSummary(hit_count, miss_count, eviction_count);
-    
+
     return 0;
 }
